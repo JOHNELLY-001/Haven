@@ -123,4 +123,23 @@ Run on a real mid-range Android, not the emulator:
 
 | Date | Version | Size | Signing | Notes |
 |---|---|---|---|---|
-| 2026-10-26 | 1.0.0+1 | 54.8 MB AAB (base 57.7 MB unpacked, incl. both ABIs + native debug symbols) | debug | baseline build; SHA256 `BC2608AC…062523A7`. Play download size is per-ABI and much smaller than the AAB. |
+| 2026-10-26 | 1.0.0+1 | 54.8 MB AAB → **11.1 MB download on arm64 phones** | debug | baseline build; SHA256 `BC2608AC…062523A7`. bundletool 1.18.3: arm64 11.1 MB, x86_64 11.3 MB, armeabi-v7a 10.6 MB. |
+
+The AAB is large because it also carries native debug symbols in
+`BUNDLE-METADATA` (not downloaded by devices) and three ABI slices of the
+engine (arm64 17.9 MB, armeabi-v7a 15.6 MB, x86_64 19.4 MB unpacked).
+
+Do **not** use `flutter build apk --split-per-abi`: the hardcoded `abiFilters`
+in `defaultConfig` conflicts with Gradle's split filters. For per-device size
+figures use bundletool:
+
+```powershell
+java -jar bundletool-all-1.18.3.jar build-apks `
+  --bundle=build\app\outputs\bundle\release\app-release.aab `
+  --output=$env:TEMP\haven.apks --mode=default `
+  --ks="$env:USERPROFILE\.android\debug.keystore" `
+  --ks-key-alias=androiddebugkey --ks-pass=pass:android --key-pass=pass:android --overwrite
+
+java -jar bundletool-all-1.18.3.jar get-size total `
+  --apks=$env:TEMP\haven.apks --dimensions=ABI
+```
