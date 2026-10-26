@@ -11,6 +11,12 @@ import 'package:e_venues/authentication/login_screen.dart';
 import 'package:e_venues/home/home_screen.dart';
 import 'package:e_venues/screens/saved_screen.dart';
 import 'package:e_venues/screens/bookings_screen.dart';
+import 'package:e_venues/screens/edit_profile_page.dart';
+import 'package:e_venues/screens/notifications_screen.dart';
+import 'package:e_venues/screens/settings_screen.dart';
+import 'package:e_venues/screens/payments_screen.dart';
+import 'package:e_venues/screens/help_screen.dart';
+import 'package:e_venues/screens/legal_screen.dart';
 import 'package:e_venues/profile_screen.dart';
 import 'package:e_venues/providers/auth_provider.dart';
 import 'package:e_venues/providers/venue_provider.dart';
@@ -77,6 +83,12 @@ class MyApp extends StatelessWidget {
         '/saved': (_) => const SavedScreen(),
         '/bookings': (_) => const BookingsScreen(),
         '/profile': (_) => ProfileScreen(),
+        '/profile/edit': (_) => const EditProfilePage(),
+        '/notifications': (_) => const NotificationsScreen(),
+        '/settings': (_) => const SettingsScreen(),
+        '/payments': (_) => const PaymentsScreen(),
+        '/help': (_) => const HelpScreen(),
+        '/legal': (_) => const LegalScreen(),
         '/register': (_) => RegisterPage(),
       },
     );
