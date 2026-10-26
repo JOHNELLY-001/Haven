@@ -41,6 +41,15 @@ class Venue {
   // Canonical event tags (backend event_types JSONB). Empty until tagged.
   final List<String> eventTypes;
 
+  // Real host + review data (backend migration 008).
+  final String businessName;
+  final String ownerName;
+  final DateTime? ownerSince;
+  final double ratingAvg;
+  final int reviewCount;
+  final List<VenueReview> reviews;
+  final String status;
+
   Venue({
     required this.id,
     required this.userId,
@@ -69,6 +78,13 @@ class Venue {
     this.landmark = '',
     this.restrictions = '',
     this.eventTypes = const [],
+    this.businessName = '',
+    this.ownerName = '',
+    this.ownerSince,
+    this.ratingAvg = 0,
+    this.reviewCount = 0,
+    this.reviews = const [],
+    this.status = 'approved',
   });
 
   factory Venue.fromJson(Map<String, dynamic> json) {
@@ -117,6 +133,17 @@ class Venue {
           json['policies']?.toString().trim() ??
           '',
       eventTypes: _asEventTypes(json['event_types']),
+      businessName: json['business_name']?.toString().trim() ?? '',
+      ownerName: json['owner_name']?.toString().trim() ?? '',
+      ownerSince: _asDateOrNull(json['owner_since']),
+      ratingAvg: _asDouble(json['rating_avg']) ?? 0,
+      reviewCount: _asInt(json['review_count']) ?? 0,
+      reviews: (json['reviews'] as List?)
+              ?.whereType<Map>()
+              .map((e) => VenueReview.fromJson(Map<String, dynamic>.from(e)))
+              .toList() ??
+          const [],
+      status: json['status']?.toString() ?? 'approved',
     );
   }
 
@@ -248,4 +275,34 @@ DateTime _asDate(dynamic v) {
   } catch (_) {
     return DateTime.fromMillisecondsSinceEpoch(0);
   }
+}
+
+DateTime? _asDateOrNull(dynamic v) {
+  if (v == null) return null;
+  return DateTime.tryParse(v.toString());
+}
+
+/// A public guest review returned by the venue detail/list extensions.
+class VenueReview {
+  final int id;
+  final String authorName;
+  final int rating;
+  final String comment;
+  final DateTime createdAt;
+
+  const VenueReview({
+    required this.id,
+    required this.authorName,
+    required this.rating,
+    required this.comment,
+    required this.createdAt,
+  });
+
+  factory VenueReview.fromJson(Map<String, dynamic> json) => VenueReview(
+        id: _asInt(json['id']) ?? 0,
+        authorName: json['author_name']?.toString() ?? 'Guest',
+        rating: _asInt(json['rating']) ?? 0,
+        comment: json['comment']?.toString() ?? '',
+        createdAt: _asDate(json['created_at']),
+      );
 }

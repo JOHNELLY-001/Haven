@@ -29,13 +29,8 @@ class VenueDetailPage extends StatefulWidget {
 }
 
 class _VenueDetailPageState extends State<VenueDetailPage> {
-  // TODO(backend): hardcoded demo extras until ratings/host APIs exist.
-  // Keep them in one labeled block so they read as placeholders.
-  static const _demoRating = '4.9';
-  static const _demoReviews = '128 reviews';
-  static const _demoHostName = 'Serena Hospitality Group';
-  static const _demoHostMeta = 'Premier Luxury Partner • 8 yrs hosting';
-
+  // Real host/review data now comes from the API (migration 008). Sections
+  // with no data are hidden instead of showing invented values.
   final PageController _heroController = PageController();
   late Future<Map<String, dynamic>> _future;
   bool _showAllAmenities = false;
@@ -329,7 +324,7 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
                                             AppTokens.success),
                                     const SizedBox(width: 4),
                                     Text(
-                                      'Verified ${(v['venue_type']?.toString() ?? 'venue').replaceAll('_', ' ')}',
+                                      'Approved ${(v['venue_type']?.toString() ?? 'venue').replaceAll('_', ' ')}',
                                       style: const TextStyle(
                                           fontSize: 11,
                                           fontWeight:
@@ -370,27 +365,47 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
                             spacing: 6,
                             runSpacing: 4,
                             children: [
-                              const Icon(AppIcons.star,
-                                  size: 16,
-                                  color: AppTokens.primary),
-                              const Text(_demoRating,
-                                  style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight:
-                                          FontWeight.w700,
-                                      color: AppTokens.ink)),
-                              const Text(
-                                '($_demoReviews)',
-                                style: TextStyle(
-                                    fontSize: 13,
-                                    color: AppTokens
-                                        .inkSecondary,
-                                    decoration: TextDecoration
-                                        .underline),
-                              ),
-                              const Text('•',
-                                  style: TextStyle(
-                                      color: AppTokens.border)),
+                              if (model.reviewCount > 0) ...[
+                                const Icon(AppIcons.starActive,
+                                    size: 16,
+                                    color: AppTokens.primary),
+                                Text(model.ratingAvg.toStringAsFixed(1),
+                                    style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight:
+                                            FontWeight.w700,
+                                        color: AppTokens.ink)),
+                                Text(
+                                  '(${model.reviewCount} review${model.reviewCount == 1 ? '' : 's'})',
+                                  style: const TextStyle(
+                                      fontSize: 13,
+                                      color: AppTokens
+                                          .inkSecondary),
+                                ),
+                                const Text('•',
+                                    style: TextStyle(
+                                        color: AppTokens.border)),
+                              ] else ...[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: AppTokens.primaryTint,
+                                    borderRadius:
+                                        BorderRadius.circular(12),
+                                  ),
+                                  child: const Text('New listing',
+                                      style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight:
+                                              FontWeight.w700,
+                                          color:
+                                              AppTokens.primary)),
+                                ),
+                                const Text('•',
+                                    style: TextStyle(
+                                        color: AppTokens.border)),
+                              ],
                               const Icon(AppIcons.location,
                                   size: 16,
                                   color: AppTokens.primary),
@@ -465,6 +480,12 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
                               expanded: _showAllAmenities,
                             ),
                           ],
+                          const SizedBox(height: 16),
+                          _ReviewsSection(
+                            reviews: model.reviews,
+                            reviewCount: model.reviewCount,
+                            ratingAvg: model.ratingAvg,
+                          ),
                           if (policies.isNotEmpty) ...[
                             const SizedBox(height: 8),
                             const Text('Policies & Inclusions',
@@ -895,8 +916,8 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
   }
 }
 
-/// Host snippet under the header: avatar, hardcoded host identity,
-/// chat shortcut into WhatsApp when a number exists.
+/// Host snippet under the header: real business/owner identity from the API,
+/// plus a chat shortcut into WhatsApp when a number exists.
 class _HostSnippet extends StatelessWidget {
   final Venue venue;
   const _HostSnippet({required this.venue});
@@ -905,6 +926,12 @@ class _HostSnippet extends StatelessWidget {
   Widget build(BuildContext context) {
     final phone =
         venue.phone.isNotEmpty ? venue.phone : venue.whatsapp;
+    final hostName = venue.businessName.isNotEmpty
+        ? venue.businessName
+        : (venue.ownerName.isNotEmpty ? venue.ownerName : 'Venue team');
+    final hostMeta = venue.ownerSince != null
+        ? 'Member since ${venue.ownerSince!.year} • Approved listing'
+        : 'Approved listing';
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -929,15 +956,12 @@ class _HostSnippet extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                    // TODO(backend): hardcoded until host APIs exist.
-                    _VenueDetailPageState._demoHostName,
+                Text(hostName,
                     style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
                         color: AppTokens.ink)),
-                Text(
-                    _VenueDetailPageState._demoHostMeta,
+                Text(hostMeta,
                     style: const TextStyle(
                         fontSize: 13,
                         color: AppTokens.inkSecondary)),
@@ -1192,6 +1216,9 @@ class _HostCard extends StatelessWidget {
         ? venue.phone
         : venue.whatsapp;
     final hasContact = phone.isNotEmpty;
+    final hostName = venue.businessName.isNotEmpty
+        ? venue.businessName
+        : (venue.ownerName.isNotEmpty ? venue.ownerName : 'Venue team');
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1213,8 +1240,8 @@ class _HostCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Hosted by the venue team',
-                        style: TextStyle(
+                    Text(hostName,
+                        style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
                             color: AppTokens.ink)),
@@ -1388,6 +1415,189 @@ class _FullscreenGalleryState extends State<_FullscreenGallery> {
                 ),
               ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Guest reviews from the API. If nobody has reviewed the venue yet, say so
+/// plainly instead of inventing a rating.
+class _ReviewsSection extends StatelessWidget {
+  final List<VenueReview> reviews;
+  final int reviewCount;
+  final double ratingAvg;
+
+  const _ReviewsSection({
+    required this.reviews,
+    required this.reviewCount,
+    required this.ratingAvg,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text('Guest reviews',
+                style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: AppTokens.ink)),
+            const SizedBox(width: 8),
+            if (reviewCount > 0)
+              Text('($reviewCount)',
+                  style: const TextStyle(
+                      fontSize: 14, color: AppTokens.inkSecondary)),
+          ],
+        ),
+        const SizedBox(height: 10),
+        if (reviewCount == 0)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppTokens.surfaceSecondary,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTokens.border),
+            ),
+            child: const Text(
+              'No reviews yet. Guests can review this venue after a confirmed booking and their event date has passed.',
+              style: TextStyle(
+                  fontSize: 13, height: 1.4, color: AppTokens.inkSecondary),
+            ),
+          )
+        else ...[
+          Row(
+            children: [
+              Text(ratingAvg.toStringAsFixed(1),
+                  style: const TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w700,
+                      color: AppTokens.ink)),
+              const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _Stars(rating: ratingAvg, size: 16),
+                  Text(
+                    '$reviewCount review${reviewCount == 1 ? '' : 's'}',
+                    style: const TextStyle(
+                        fontSize: 12, color: AppTokens.inkSecondary),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...reviews.map((r) => _ReviewTile(review: r)),
+          if (reviewCount > reviews.length)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                'Showing the latest ${reviews.length} of $reviewCount reviews.',
+                style: const TextStyle(
+                    fontSize: 12, color: AppTokens.inkSecondary),
+              ),
+            ),
+        ],
+      ],
+    );
+  }
+}
+
+class _ReviewTile extends StatelessWidget {
+  final VenueReview review;
+  const _ReviewTile({required this.review});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppTokens.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTokens.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: const BoxDecoration(
+                  color: AppTokens.primaryTint,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    review.authorName.isNotEmpty
+                        ? review.authorName[0].toUpperCase()
+                        : 'G',
+                    style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppTokens.primary),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(review.authorName,
+                        style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppTokens.ink)),
+                    Text(
+                      review.createdAt.millisecondsSinceEpoch == 0
+                          ? ''
+                          : DateFormat('MMM yyyy')
+                              .format(review.createdAt.toLocal()),
+                      style: const TextStyle(
+                          fontSize: 11, color: AppTokens.inkSecondary),
+                    ),
+                  ],
+                ),
+              ),
+              _Stars(rating: review.rating.toDouble(), size: 13),
+            ],
+          ),
+          if (review.comment.trim().isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(review.comment,
+                style: const TextStyle(
+                    fontSize: 14, height: 1.45, color: AppTokens.ink)),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _Stars extends StatelessWidget {
+  final double rating;
+  final double size;
+  const _Stars({required this.rating, this.size = 14});
+
+  @override
+  Widget build(BuildContext context) {
+    final full = rating.round().clamp(0, 5);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(
+        5,
+        (i) => Icon(
+          i < full ? AppIcons.starActive : AppIcons.star,
+          size: size,
+          color: i < full ? AppTokens.primary : AppTokens.border,
         ),
       ),
     );
