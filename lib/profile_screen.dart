@@ -371,7 +371,7 @@ class _UserCard extends StatelessWidget {
                             color: AppTokens.surface,
                             width: 2),
                       ),
-                      child: const Icon(AppIcons.verified,
+                      child: const Icon(AppIcons.profileActive,
                           size: 12, color: Colors.white),
                     ),
                   ),
@@ -413,7 +413,7 @@ class _UserCard extends StatelessWidget {
                             children: [
                               Icon(
                                   loggedIn
-                                      ? AppIcons.verified
+                                      ? AppIcons.profileActive
                                       : AppIcons.profile,
                                   size: 12,
                                   color: AppTokens.primary),
