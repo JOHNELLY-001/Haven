@@ -127,30 +127,6 @@ class MapOverlayCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                    if (venueId != null)
-                      Positioned(
-                        top: 6,
-                        right: 6,
-                        child: Container(
-                          width: 28,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            color: Colors.white
-                                .withValues(alpha: 0.9),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: FavoriteButton(
-                              saved: saved,
-                              iconSize: 16,
-                              idleColor: AppTokens.ink,
-                              onToggle: (_) => context
-                                  .read<SavedProvider>()
-                                  .toggle(venueId),
-                            ),
-                          ),
-                        ),
-                      ),
                   ],
                 ),
                 const SizedBox(width: 12),
@@ -216,54 +192,6 @@ class MapOverlayCard extends StatelessWidget {
                   ),
                 )
               ],
-            ),
-            const Padding(
-              padding: EdgeInsets.only(top: 8),
-              child: Divider(height: 1),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      _type(venue),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          fontSize: 11,
-                          color: AppTokens.inkSecondary),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: onOpen,
-                    behavior: HitTestBehavior.opaque,
-                    child: Container(
-                      height: 32,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14),
-                      decoration: BoxDecoration(
-                        color: AppTokens.primary,
-                        borderRadius:
-                            BorderRadius.circular(12),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text('View Details',
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white)),
-                          SizedBox(width: 4),
-                          Icon(AppIcons.forward,
-                              size: 14, color: Colors.white),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
             ),
           ],
         ),
