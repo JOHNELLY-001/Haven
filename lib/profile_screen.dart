@@ -14,9 +14,7 @@ import 'theme/tokens.dart';
 import 'ui/ui.dart';
 
 /// Coastal profile screen: app bar with shortcuts, user card, bookings
-/// preview with Upcoming/Past toggle, settings rows, logout.
-/// Logic unchanged (auth state, counts, cancel, navigation). Missing
-/// backend data is hardcoded in the labeled block below.
+/// preview with Upcoming/Past toggle, account rows, logout.
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -24,22 +22,12 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-// TODO(backend): hardcoded until profile/ratings APIs exist.
-// Kept in one labeled block so they read as placeholders.
-const _demoRole = 'Event Organizer • Dar es Salaam';
-const _demoRating = '4.95';
-const _demoMemberSince = "Member since '23";
-
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _showPast = false;
 
   bool _isPast(Booking b) {
     final today = DateUtils.dateOnly(DateTime.now());
     return DateUtils.dateOnly(b.dates.end).isBefore(today);
-  }
-
-  void _comingSoon(String feature) {
-    AppSnack.info(context, '$feature is coming soon.');
   }
 
   Future<void> _shareProfile(String name) async {
@@ -91,6 +79,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
         bookings.items.where((b) => !_isPast(b)).toList();
     final past = bookings.items.where((b) => _isPast(b)).toList();
     final preview = (_showPast ? past : upcoming).firstOrNull;
+    final roleLabel = !loggedIn
+        ? 'Guest'
+        : auth.isAdmin
+            ? 'Haven admin'
+            : 'Event planner';
+    final subtitle = !loggedIn
+        ? 'Sign in to book and save venues'
+        : (auth.profileEmail.isNotEmpty
+            ? auth.profileEmail
+            : roleLabel);
 
     return Scaffold(
       backgroundColor: AppTokens.bg,
@@ -100,13 +98,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           IconButton(
             tooltip: 'Notifications',
-            onPressed: () => _comingSoon('Notifications'),
+            onPressed: () =>
+                Navigator.of(context).pushNamed('/notifications'),
             icon: const Icon(AppIcons.notifications,
                 color: AppTokens.inkSecondary, size: 22),
           ),
           IconButton(
             tooltip: 'Settings',
-            onPressed: () => _comingSoon('Settings'),
+            onPressed: () =>
+                Navigator.of(context).pushNamed('/settings'),
             icon: const Icon(AppIcons.settings,
                 color: AppTokens.inkSecondary, size: 22),
           ),
@@ -117,8 +117,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           _UserCard(
             name: name,
+            subtitle: subtitle,
+            roleLabel: roleLabel,
+            memberSince: loggedIn ? auth.memberSince : null,
             loggedIn: loggedIn,
-            onEdit: () => _comingSoon('Edit profile'),
+            onEdit: () => Navigator.of(context).pushNamed('/profile/edit'),
             onShare: () => _shareProfile(name),
             onLogin: () => Navigator.of(context)
                 .pushReplacementNamed('/login'),
@@ -216,9 +219,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 _SettingRow(
                   icon: AppIcons.wallet,
-                  title: 'Payment Methods & M-Pesa',
-                  subtitle: 'Vodacom M-Pesa, CRDB, NMB',
-                  onTap: () => _comingSoon('Payments'),
+                  title: 'Deposits & payments',
+                  subtitle: 'Pay the venue directly · view deposits due',
+                  onTap: () =>
+                      Navigator.of(context).pushNamed('/payments'),
                 ),
                 _SettingRow(
                   icon: AppIcons.hostAdd,
@@ -232,12 +236,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _SettingRow(
                   icon: AppIcons.help,
                   title: 'Help & Support',
-                  onTap: () => _comingSoon('Help & support'),
+                  onTap: () => Navigator.of(context).pushNamed('/help'),
                 ),
                 _SettingRow(
                   icon: AppIcons.verified,
                   title: 'Terms & Privacy',
-                  onTap: () => _comingSoon('Terms & privacy'),
+                  onTap: () => Navigator.of(context).pushNamed('/legal'),
                   last: true,
                 ),
               ],
@@ -302,12 +306,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
 class _UserCard extends StatelessWidget {
   final String name;
+  final String subtitle;
+  final String roleLabel;
+  final DateTime? memberSince;
   final bool loggedIn;
   final VoidCallback onEdit;
   final VoidCallback onShare;
   final VoidCallback onLogin;
   const _UserCard({
     required this.name,
+    required this.subtitle,
+    required this.roleLabel,
+    required this.memberSince,
     required this.loggedIn,
     required this.onEdit,
     required this.onShare,
@@ -379,11 +389,11 @@ class _UserCard extends StatelessWidget {
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
                             color: AppTokens.ink)),
-                    const Text(
-                        _demoRole,
+                    Text(
+                        subtitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
+                        style: const TextStyle(
                             fontSize: 13,
                             color: AppTokens.inkSecondary)),
                     const SizedBox(height: 4),
@@ -398,16 +408,18 @@ class _UserCard extends StatelessWidget {
                             borderRadius:
                                 BorderRadius.circular(12),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(AppIcons.starActive,
+                              Icon(
+                                  loggedIn
+                                      ? AppIcons.verified
+                                      : AppIcons.profile,
                                   size: 12,
-                                  // TODO(backend): hardcoded rating.
                                   color: AppTokens.primary),
-                              SizedBox(width: 4),
-                              Text('$_demoRating Rating',
-                                  style: TextStyle(
+                              const SizedBox(width: 4),
+                              Text(roleLabel,
+                                  style: const TextStyle(
                                       fontSize: 11,
                                       fontWeight:
                                           FontWeight.w600,
@@ -415,12 +427,15 @@ class _UserCard extends StatelessWidget {
                             ],
                           ),
                         ),
-                        const SizedBox(width: 6),
-                        const Text(_demoMemberSince,
-                            style: TextStyle(
-                                fontSize: 12,
-                                color:
-                                    AppTokens.inkSecondary)),
+                        if (memberSince != null) ...[
+                          const SizedBox(width: 6),
+                          Text(
+                              'Member since ${DateFormat("MMM ''yy").format(memberSince!)}',
+                              style: const TextStyle(
+                                  fontSize: 12,
+                                  color:
+                                      AppTokens.inkSecondary)),
+                        ],
                       ],
                     ),
                   ],

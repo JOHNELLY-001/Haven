@@ -35,9 +35,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     {
       'title': 'Book with Confidence',
       'subtitle':
-          'Direct reservations, hassle-free event permits, and secure local payments with M-Pesa verification.',
+          'Request your dates, contact the host directly, and treat a booking as confirmed only once the venue approves it.',
       'image': 'assets/images/cozy-cafeteria.webp',
-      'badge': 'Oysterbay • Verified Host',
+      'badge': 'Oysterbay • Approved listings',
     },
   ];
 
