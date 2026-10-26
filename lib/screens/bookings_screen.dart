@@ -35,7 +35,17 @@ class _BookingsScreenState extends State<BookingsScreen> {
     final shown = _showPast ? past : upcoming;
     return Scaffold(
       backgroundColor: AppTokens.bg,
-      appBar: AppBar(title: const Text('My bookings')),
+      appBar: AppBar(
+        title: const Text('My bookings'),
+        actions: [
+          IconButton(
+            tooltip: 'Refresh status',
+            onPressed: () => context.read<BookingProvider>().refresh(),
+            icon: const Icon(AppIcons.refresh,
+                color: AppTokens.inkSecondary, size: 22),
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Padding(
@@ -177,14 +187,13 @@ class _BookingsScreenState extends State<BookingsScreen> {
                                                 FontWeight.w700,
                                             color:
                                                 AppTokens.ink)),
-                                    if (b.status == 'declined' &&
-                                        b.notes.isNotEmpty) ...[
+                                    if (b.status == 'declined') ...[
                                       const SizedBox(height: 2),
-                                      Text(
-                                        'Host note: ${b.notes}',
+                                      const Text(
+                                        'The host could not take these dates.',
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                             fontSize: 11,
                                             color: AppTokens.error),
                                       ),
