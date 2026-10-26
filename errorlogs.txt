@@ -1,33 +1,35 @@
-I haven't seen a new error since the build was still running, so this is the full fix plan for everything so far. Run it in order.
-
-**Step 1: Stop old Gradle processes**
-```
-cd D:\Android\android_projects\e_venues\android
-gradlew --stop
-cd ..
-```
-
-**Step 2: Give Gradle safe memory limits**
-
-Edit `android\gradle.properties` and set these lines (replace any existing `org.gradle.jvmargs`):
-```properties
-org.gradle.jvmargs=-Xmx2G -XX:MaxMetaspaceSize=768m
-kotlin.daemon.jvmargs=-Xmx1G
-org.gradle.parallel=false
-```
-If your PC has under 8 GB of RAM, use `-Xmx1536m` instead of `-Xmx2G`.
-
-**Step 3: Fix the NDK version**
-
-In `android\app\build.gradle.kts`, inside the `android { ... }` block, add:
-```kotlin
-ndkVersion = "28.2.13676358"
-```
-
-**Step 4: Check Kotlin is set**
-
-In `android\settings.gradle.kts`, confirm:
-```kotlin
-id("org.jetbrains.kotlin.android") version "2.2.20" apply false
-```
-This is already working, and moving to 2.3.20 is optional for later.
+2026-10-11 15:29:09.132 [error] error: new row for relation "venue_list" violates check constraint "venue_list_pricing_type_check"
+    at /var/task/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async registerVenue (file:///var/task/src/controllers/venueController.js:114:25) {
+  length: 773,
+  severity: 'ERROR',
+  code: '23514',
+  detail: 'Failing row contains (4, 1, Mbezi Garden, event_hall, Very wide hall, Stage and lightings, Full AC and Fan condition., Kinondoni, Mbezi, Mbezi Shule, -6.717618, 39.207887, 200, Indoor, t, hour, 50000.00, null, ["Stage","Generator backup","Sound system","Parking"], https://res.cloudinary.com/dwlj3fcc5/image/upload/v1791732502/my..., ["https://res.cloudinary.com/dwlj3fcc5/image/upload/v1791732519/..., 04:00:00, No outside catering., 2026-10-11 15:29:09.12951, 2026-10-11 15:29:09.12951, +255629763121, +255629763121, Near Mbezi shule, ["Weddings", "Parties"], 30).',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'venue_list',
+  column: undefined,
+  dataType: undefined,
+  constraint: 'venue_list_pricing_type_check',
+  file: 'execMain.c',
+  line: '2084',
+  routine: 'ExecConstraints'
+}
+2026-10-11 15:29:09.133 [info] 154.74.193.79 - - [11/Oct/2026:15:29:09 +0000] "POST /api/fetch/venues HTTP/1.1" 500 33 "https://haven-venue.vercel.app/" "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Mobile Safari/537.36"
+----------
+2026-10-11 (resolution) FIXED:
+Root cause: prod CHECK venue_list_pricing_type_check allowed only
+('hourly','daily','both'), while controller + app + portal all speak
+('hour','day','both','unknown'). The "Mbezi Garden" row used 'hour':
+passed validation, died at INSERT (PG 23514). Only 'both' could ever
+succeed — confirmed: existing rows are all 'both'.
+Fix: migrations_005_pricing_type_check.sql aligns the DB with the code
+contract. Applied to prod, verified new definition, probe-inserted a
+full 'hour' row in a rolled-back transaction (no residue). Committed +
+pushed (b800430). No redeploy needed (migrations run, constraint is live).
+Action: retry publishing Mbezi Garden from the portal.
