@@ -1,4 +1,4 @@
-# Miscellaneous
+﻿# Miscellaneous
 *.class
 *.log
 *.pyc
@@ -50,6 +50,7 @@ app.*.map.json
 /android/app/release
 /android/local.properties
 /android/.gradle/
+/android/build/
 /.metadata
 
 # Generated / local-only caches

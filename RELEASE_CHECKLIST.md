@@ -124,6 +124,7 @@ Run on a real mid-range Android, not the emulator:
 | Date | Version | Size | Signing | Notes |
 |---|---|---|---|---|
 | 2026-10-26 | 1.0.0+1 | 54.8 MB AAB → **11.1 MB download on arm64 phones** | debug | baseline build; SHA256 `BC2608AC…062523A7`. bundletool 1.18.3: arm64 11.1 MB, x86_64 11.3 MB, armeabi-v7a 10.6 MB. |
+| 2026-10-26 | 1.0.0+1 | 55.3 MB AAB → **11.2 MB download on arm64 phones** | debug | real-data pass (profile, reviews, support screens); SHA256 `4B615D09…CD60D862`. bundletool 1.18.3: arm64 11.18 MB, x86_64 11.37 MB, armeabi-v7a 10.72 MB. |
 
 The AAB is large because it also carries native debug symbols in
 `BUNDLE-METADATA` (not downloaded by devices) and three ABI slices of the

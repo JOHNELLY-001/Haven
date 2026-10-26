@@ -286,12 +286,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const Center(
             child: Column(
               children: [
-                Text('Haven · v1.0',
+                Text('Haven',
                     style: TextStyle(
                         color: AppTokens.inkTertiary,
                         fontSize: 12)),
                 SizedBox(height: 2),
-                Text('Brought to you by Swahili Venues Network',
+                Text('Event venues across Dar es Salaam',
                     style: TextStyle(
                         color: AppTokens.inkTertiary,
                         fontSize: 11)),
