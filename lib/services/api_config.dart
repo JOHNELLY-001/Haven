@@ -11,6 +11,21 @@ class ApiConfig {
 
   static const Duration timeout = Duration(seconds: 12);
 
+  /// Public host portal (venue onboarding web app). Overridable with
+  /// `--dart-define=HOST_PORTAL_URL=...` for staging.
+  static const String hostPortalUrl = String.fromEnvironment(
+    'HOST_PORTAL_URL',
+    defaultValue: 'https://haven-venue.vercel.app/login',
+  );
+
+  /// Deep link into the portal's onboarding, carrying the account email
+  /// so the web login can prefill it. Token is NEVER put in the URL.
+  static Uri hostOnboarding({String email = ''}) {
+    final query = <String, String>{'next': '/venues/new'};
+    if (email.isNotEmpty) query['email'] = email;
+    return Uri.parse(hostPortalUrl).replace(queryParameters: query);
+  }
+
   static Uri login() => Uri.parse('$baseUrl/api/login');
   static Uri register() => Uri.parse('$baseUrl/api/register');
   static Uri bookings() => Uri.parse('$baseUrl/api/bookings');
