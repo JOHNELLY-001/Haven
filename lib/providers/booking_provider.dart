@@ -56,8 +56,11 @@ class BookingProvider extends ChangeNotifier {
     _syncing = true;
     try {
       // Push requests made while logged out, then read server truth.
-      final pending =
-          _items.where((b) => b.status == 'requested').toList();
+      // Only when switching away from local storage: refreshing an already
+      // remote list must never re-create bookings that the server owns.
+      final pending = _remoteActive
+          ? const <Booking>[]
+          : _items.where((b) => b.status == 'requested').toList();
       for (final p in pending) {
         try {
           await _remote.create(
