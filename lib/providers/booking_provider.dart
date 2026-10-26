@@ -42,6 +42,10 @@ class BookingProvider extends ChangeNotifier {
     }
   }
 
+  /// Explicit pull for screens: server truth when signed in, local otherwise.
+  Future<void> refresh() =>
+      AuthTokenStore.token != null ? useRemote() : useLocal();
+
   Future<void> useLocal() async {
     _remoteActive = false;
     final loaded = await _local.load();
