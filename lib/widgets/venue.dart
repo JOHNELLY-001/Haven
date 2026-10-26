@@ -31,8 +31,8 @@ class Venue {
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  // Phase 4 — contact/location/policy fields. Backend does not send most
-  // of these yet; every one defaults to '' so missing data never breaks UI.
+  // Contact/location/policy fields. Every one defaults to '' so a listing
+  // saved before those fields were filled still renders safely.
   final String phone;
   final String whatsapp;
   final String landmark;
