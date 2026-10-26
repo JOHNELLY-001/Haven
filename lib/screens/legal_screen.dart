@@ -34,7 +34,7 @@ class LegalScreen extends StatelessWidget {
     ),
     (
       'Your choices',
-      'Edit your name, phone and email in Edit profile, and any listing in the host portal. To delete your account or a review, email support.',
+      'Edit your name, phone and email in Edit profile, and any listing in the host portal. To delete your account or a review, contact support from Help & Support in the app.',
     ),
   ];
 
