@@ -14,6 +14,21 @@ if (localPropertiesFile.exists()) {
     localProperties.load(FileInputStream(localPropertiesFile))
 }
 
+// Release signing is read from android/key.properties (gitignored). Until it
+// exists we keep falling back to the debug key so `flutter build` still runs,
+// but such an AAB is NOT accepted by Google Play.
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+val hasReleaseKeystore = keystorePropertiesFile.exists()
+if (hasReleaseKeystore) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+} else {
+    logger.warn(
+        "No android/key.properties found - release builds will use the DEBUG key " +
+        "and cannot be uploaded to Google Play. See RELEASE_CHECKLIST.md."
+    )
+}
+
 android {
     namespace = "com.example.e_venues"
     compileSdk = flutter.compileSdkVersion
@@ -51,11 +66,26 @@ android {
         }
     }
 
+    signingConfigs {
+        if (hasReleaseKeystore) {
+            create("release") {
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+                storeFile = file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Signed with the upload keystore when key.properties exists;
+            // otherwise debug-signed (local testing only, not Play-uploadable).
+            signingConfig = if (hasReleaseKeystore) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 }
