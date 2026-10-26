@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'providers/auth_provider.dart';
 import 'providers/booking_provider.dart';
 import 'providers/saved_provider.dart';
+import 'services/api_config.dart';
 import 'services/cloudinary.dart';
 import 'theme/tokens.dart';
 import 'ui/ui.dart';
@@ -43,6 +45,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _shareProfile(String name) async {
     await SharePlus.instance.share(ShareParams(
         text: '$name on Haven — find and book great venues.'));
+  }
+
+  /// Host-a-Venue handoff: logged-in users get an explainer sheet, then
+  /// the portal opens in the external browser with email prefilled.
+  /// Guests are sent to app login first.
+  Future<void> _openHostPortal(bool loggedIn, String email) async {
+    if (!loggedIn) {
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed('/login');
+      }
+      return;
+    }
+    final go = await showModalBottomSheet<bool>(
+      context: context,
+      builder: (_) => const _HostHandoffSheet(),
+    );
+    if (go != true || !mounted) return;
+    final uri = ApiConfig.hostOnboarding(email: email);
+    try {
+      final ok = await launchUrl(uri,
+          mode: LaunchMode.externalApplication);
+      if (!ok && mounted) {
+        AppSnack.error(context, 'Could not open the host portal.');
+      }
+    } catch (_) {
+      if (mounted) {
+        AppSnack.error(context, 'Could not open the host portal.');
+      }
+    }
   }
 
   @override
@@ -195,7 +226,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   subtitle:
                       'List your space in Masaki, Oysterbay & Dar',
                   badge: 'Partner',
-                  onTap: () => _comingSoon('Venue hosting'),
+                  onTap: () => _openHostPortal(
+                      loggedIn, auth.profileEmail),
                 ),
                 _SettingRow(
                   icon: AppIcons.help,
@@ -1003,6 +1035,88 @@ class _SettingRow extends StatelessWidget {
         ),
         if (!last) const Divider(height: 1),
       ],
+    );
+  }
+}
+
+/// Explainer shown before leaving the app for the host portal.
+/// Sets the one expectation that matters: same Haven login, no new
+/// password — the portal reminds them again on its login screen.
+class _HostHandoffSheet extends StatelessWidget {
+  const _HostHandoffSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Become a host',
+                style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: AppTokens.ink)),
+            const SizedBox(height: 8),
+            const Text(
+                'Listing opens in your browser, where you can add photos and drop a map pin more easily.',
+                style: TextStyle(
+                    fontSize: 14,
+                    height: 1.5,
+                    color: AppTokens.inkSecondary)),
+            const SizedBox(height: 12),
+            const _HandoffPoint(
+                icon: AppIcons.checkCircle,
+                text: 'Use the same Haven login — no new password.'),
+            const _HandoffPoint(
+                icon: AppIcons.clock,
+                text: 'Takes about 5 minutes, draft saves automatically.'),
+            const _HandoffPoint(
+                icon: AppIcons.imageBroken,
+                text: 'Have 4+ venue photos ready on your phone.'),
+            const SizedBox(height: 16),
+            AppButton(
+              label: 'Continue to web',
+              onPressed: () => Navigator.of(context).pop(true),
+            ),
+            const SizedBox(height: 8),
+            AppButton(
+              label: 'Not now',
+              variant: AppButtonVariant.secondary,
+              onPressed: () => Navigator.of(context).pop(false),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HandoffPoint extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  const _HandoffPoint({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: AppTokens.success),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(text,
+                style: const TextStyle(
+                    fontSize: 14,
+                    height: 1.45,
+                    color: AppTokens.ink)),
+          ),
+        ],
+      ),
     );
   }
 }
