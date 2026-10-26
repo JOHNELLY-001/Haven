@@ -129,7 +129,7 @@ class HelpScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Email ${ApiConfig.supportEmail} and we will reply as soon as we can. Include the venue name and your booking dates so we can help faster.',
+                  'Contact support and we will reply as soon as we can. Include the venue name and your booking dates so we can help faster.',
                   style: const TextStyle(
                       fontSize: 13,
                       height: 1.45,
@@ -137,7 +137,7 @@ class HelpScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 14),
                 AppButton(
-                  label: 'Email support',
+                  label: 'Contact support',
                   height: 44,
                   onPressed: () => _emailSupport(context),
                 ),
