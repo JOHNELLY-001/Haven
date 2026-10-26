@@ -20,7 +20,17 @@ class NotificationsScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppTokens.bg,
-      appBar: AppBar(title: const Text('Notifications')),
+      appBar: AppBar(
+        title: const Text('Notifications'),
+        actions: [
+          IconButton(
+            tooltip: 'Refresh updates',
+            onPressed: () => context.read<BookingProvider>().refresh(),
+            icon: const Icon(AppIcons.refresh,
+                color: AppTokens.inkSecondary, size: 22),
+          ),
+        ],
+      ),
       body: items.isEmpty
           ? const EmptyState(
               icon: AppIcons.notifications,
