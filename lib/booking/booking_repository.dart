@@ -69,6 +69,10 @@ class Booking {
   final String contactPhone;
   final double deposit;
 
+  /// Server review state: non-null once this booking has been reviewed.
+  final int? reviewId;
+  final DateTime updatedAt;
+
   Booking({
     required this.id,
     required this.venueId,
@@ -86,9 +90,22 @@ class Booking {
     this.contactName = '',
     this.contactPhone = '',
     this.deposit = 0,
-  });
+    this.reviewId,
+    DateTime? updatedAt,
+  }) : updatedAt = updatedAt ?? createdAt;
 
   int get nights => dates.end.difference(dates.start).inDays.clamp(1, 365);
+
+  bool get isPast {
+    final today = DateTime.now();
+    final end = DateTime(dates.end.year, dates.end.month, dates.end.day);
+    return end.isBefore(DateTime(today.year, today.month, today.day));
+  }
+
+  /// A guest can review once the host approved the request, the event date
+  /// has passed, and no review exists yet.
+  bool get canReview =>
+      status == 'approved' && isPast && reviewId == null;
 
   Booking copyWith({String? status}) => Booking(
         id: id,
@@ -107,6 +124,8 @@ class Booking {
         contactName: contactName,
         contactPhone: contactPhone,
         deposit: deposit,
+        reviewId: reviewId,
+        updatedAt: updatedAt,
       );
 
   Map<String, dynamic> toJson() => {
@@ -127,6 +146,8 @@ class Booking {
         'contactName': contactName,
         'contactPhone': contactPhone,
         'deposit': deposit,
+        'reviewId': reviewId,
+        'updatedAt': updatedAt.toIso8601String(),
       };
 
   /// All new keys default — v1 bookings (pre-Phase-5 JSON) still parse.
@@ -155,6 +176,10 @@ class Booking {
         contactName: json['contactName']?.toString() ?? '',
         contactPhone: json['contactPhone']?.toString() ?? '',
         deposit: _toDouble(json['deposit']),
+        reviewId: json['reviewId'] == null
+            ? null
+            : _toInt(json['reviewId']),
+        updatedAt: DateTime.tryParse(json['updatedAt']?.toString() ?? ''),
       );
 }
 
@@ -284,6 +309,8 @@ class ApiBookingRepository implements BookingRepository {
         'contactName': j['contact_name'] ?? '',
         'contactPhone': j['contact_phone'] ?? '',
         'deposit': j['deposit'] ?? 0,
+        'reviewId': j['review_id'],
+        'updatedAt': j['updated_at'] ?? j['created_at'],
       });
 
   @override

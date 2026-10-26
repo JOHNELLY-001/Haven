@@ -11,6 +11,12 @@ class ApiConfig {
 
   static const Duration timeout = Duration(seconds: 12);
 
+  /// Who to email from Help & Support. Overridable at build time.
+  static const String supportEmail = String.fromEnvironment(
+    'SUPPORT_EMAIL',
+    defaultValue: 'johnkiranga25@gmail.com',
+  );
+
   /// Public host portal (venue onboarding web app). Overridable with
   /// `--dart-define=HOST_PORTAL_URL=...` for staging.
   static const String hostPortalUrl = String.fromEnvironment(
@@ -28,7 +34,12 @@ class ApiConfig {
 
   static Uri login() => Uri.parse('$baseUrl/api/login');
   static Uri register() => Uri.parse('$baseUrl/api/register');
+  static Uri me() => Uri.parse('$baseUrl/api/me');
   static Uri bookings() => Uri.parse('$baseUrl/api/bookings');
+
+  /// Public guest reviews for a venue (also the POST target to add one).
+  static Uri venueReviews(int id) =>
+      Uri.parse('$baseUrl/api/venues/$id/reviews');
 
   static Uri myBookings({String? filter, int? page, int? limit}) {
     final query = <String, String>{};

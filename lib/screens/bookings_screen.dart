@@ -7,6 +7,7 @@ import '../providers/booking_provider.dart';
 import '../services/cloudinary.dart';
 import '../theme/tokens.dart';
 import '../ui/ui.dart';
+import 'write_review_page.dart';
 
 /// My Bookings: local reservations with status chips,
 /// Upcoming / Past filters, and cancel.
@@ -176,12 +177,70 @@ class _BookingsScreenState extends State<BookingsScreen> {
                                                 FontWeight.w700,
                                             color:
                                                 AppTokens.ink)),
+                                    if (b.status == 'declined' &&
+                                        b.notes.isNotEmpty) ...[
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Host note: ${b.notes}',
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                            fontSize: 11,
+                                            color: AppTokens.error),
+                                      ),
+                                    ],
+                                    if (b.reviewId != null) ...[
+                                      const SizedBox(height: 4),
+                                      const Text(
+                                        'Reviewed — thank you',
+                                        style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppTokens.success),
+                                      ),
+                                    ] else if (b.canReview) ...[
+                                      const SizedBox(height: 6),
+                                      SizedBox(
+                                        height: 30,
+                                        child: OutlinedButton(
+                                          style:
+                                              OutlinedButton.styleFrom(
+                                            padding: const EdgeInsets
+                                                .symmetric(
+                                                horizontal: 10),
+                                            foregroundColor:
+                                                AppTokens.primary,
+                                            side: const BorderSide(
+                                                color:
+                                                    AppTokens.primary),
+                                            textStyle:
+                                                const TextStyle(
+                                                    fontSize: 11,
+                                                    fontWeight:
+                                                        FontWeight
+                                                            .w700),
+                                            shape:
+                                                RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius
+                                                      .circular(10),
+                                            ),
+                                          ),
+                                          onPressed: () =>
+                                              _openReview(b),
+                                          child:
+                                              const Text('Rate venue'),
+                                        ),
+                                      ),
+                                    ],
                                   ],
                                 ),
                               ),
                             ),
-                            if (!_showPast)
+                            if (!_showPast &&
+                                b.status == 'requested')
                               IconButton(
+                                tooltip: 'Cancel request',
                                 icon: const Icon(
                                     AppIcons.cancel,
                                     color:
@@ -201,13 +260,43 @@ class _BookingsScreenState extends State<BookingsScreen> {
     );
   }
 
+  Future<void> _openReview(Booking b) async {
+    final published = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => WriteReviewPage(
+          venueId: b.venueId,
+          bookingId: b.id,
+          venueName: b.venueName,
+        ),
+      ),
+    );
+    if (published == true) {
+      if (!mounted) return;
+      AppSnack.success(context, 'Review published. Thank you!');
+      await context.read<BookingProvider>().useRemote();
+    }
+  }
+
   String _statusLabel(String status) {
-    if (status.isEmpty) return 'Requested';
-    return status[0].toUpperCase() + status.substring(1);
+    switch (status.toLowerCase()) {
+      case 'requested':
+        return 'Awaiting host';
+      case 'approved':
+        return 'Confirmed';
+      case 'declined':
+        return 'Declined';
+      case 'cancelled':
+        return 'Cancelled';
+      default:
+        return status.isEmpty
+            ? 'Requested'
+            : status[0].toUpperCase() + status.substring(1);
+    }
   }
 
   StatusKind _statusKind(String status) {
     switch (status.toLowerCase()) {
+      case 'approved':
       case 'confirmed':
         return StatusKind.success;
       case 'cancelled':
