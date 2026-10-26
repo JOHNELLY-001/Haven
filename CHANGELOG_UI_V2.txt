@@ -472,6 +472,20 @@ RELEASE READINESS ROUND — PARTIALLY DONE
   recents/viewed twice, map card heart/action-bar once). Check
   for another agent/tool editing lib/ before release.
 
+-------------------------------------------------------
+HOST PORTAL HANDOFF (Profile → web) — DONE
+Validated: `flutter analyze` clean; portal `vite build` clean.
+
+- ApiConfig.hostPortalUrl (+ HOST_PORTAL_URL dart-define override,
+  default https://haven-venue.vercel.app) and hostOnboarding()
+  helper (?next=/venues/new&email=, token never in URL).
+- Profile "Host a Venue" row: guests go to app login first;
+  logged-in users get an explainer sheet (same login, ~5 min,
+  photos ready) then the portal opens in the external browser.
+- Portal login: coral same-credentials alert whenever ?next= is
+  present + email prefill from ?email= (password only to type).
+  Register view already states one account for both.
+
 QA CHECKLIST (needs a real device — not done here):
 [ ] Cold start -> Explore scrolls at 60fps on a mid-range Android
 [ ] System text size 200%: no clipped buttons/badges anywhere
