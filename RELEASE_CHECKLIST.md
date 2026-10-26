@@ -1,28 +1,28 @@
 # Release checklist — Haven (Android)
 
-Status: **blocked on two decisions** (package id + upload keystore) plus hardware
-QA. Code, backend and portal are ready. Last build in this round:
-`flutter build appbundle --release` (debug-signed on purpose, see §3).
+Status: **blocked on the upload keystore, the Maps key restriction for the new
+package, and hardware QA.** Code, backend and portal are ready. Last build in
+this round: `flutter build appbundle --release` (debug-signed on purpose, see
+§3).
 
 ---
 
-## 1. Decision: application ID (do this before the first upload)
+## 1. Application ID (decided)
 
-Current: `com.example.e_venues` (`android/app/build.gradle.kts:38`).
+Applied: **`tz.haven.app`** (`android/app/build.gradle.kts`). The Dart
+namespace can stay `com.example.e_venues`; only the applicationId is public.
 
-Google Play permanently binds the package name to the first upload, and
-`com.example.*` is a placeholder namespace that Play discourages. Changing it
-later means shipping a brand-new app and losing reviews/installs.
+Google Play permanently binds the package name to the first upload. Changing
+it later means shipping a brand-new app and losing reviews/installs.
 
-Recommended: **`tz.haven.app`** (or any domain you actually control).
+Before release, update Google Cloud → the Maps API key's **Application
+restrictions**:
+- Add package `tz.haven.app`.
+- Add the **upload/release SHA-1** (from the keystore in §2) *and* the debug
+  SHA-1 if you install debug builds on a phone.
+Without this the map renders blank in release builds.
 
-If you change it, also update:
-- `android/app/build.gradle.kts` → `applicationId = "tz.haven.app"` (namespace
-  can stay `com.example.e_venues`; only the applicationId is public).
-- Google Cloud → the Maps API key's **Application restrictions** → add the new
-  package name + the upload/release SHA-1 fingerprint. Without this the map
-  renders blank in release builds.
-- Any future Android App Links (`assetlinks.json`) must use the same package.
+Any future Android App Links (`assetlinks.json`) must use the same package.
 
 ## 2. Decision: upload keystore (one-time)
 
@@ -117,9 +117,9 @@ Run on a real mid-range Android, not the emulator:
 - No "back to Haven app" link on the web success screen yet (needs App Links,
   which require the final package name from §1).
 - No approve/reject email — hosts see status on the portal dashboard.
-- Support address is still `johnkiranga25@gmail.com`; replace it with a real
-  support mailbox before wide release (`ApiConfig.supportEmail` and the portal
-  footer/legal pages).
+- Support address is hidden in the UI for now but still used by the
+  “Contact support” links (`ApiConfig.supportEmail` and the portal mailto);
+  replace it with a real support mailbox before wide release.
 - The 8-item device QA (§5) and the host flow (§6) still need a physical phone.
 
 ## 8. Release history
