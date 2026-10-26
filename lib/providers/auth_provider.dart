@@ -36,6 +36,12 @@ class AuthProvider extends ChangeNotifier {
 
   String get profilePhone => _profile['contacts'] ?? '';
   String get profileEmail => _profile['email'] ?? '';
+  String get role => _profile['role'] ?? 'customer';
+  bool get isAdmin => role == 'admin';
+
+  /// Account creation date returned by `/api/me` (null until it loads).
+  DateTime? get memberSince =>
+      DateTime.tryParse(_profile['created_at'] ?? '');
 
   static const _kTokenKey = 'auth_token';
   static const _kProfileKey = 'user_profile';
@@ -67,6 +73,43 @@ class AuthProvider extends ChangeNotifier {
     }
     AuthTokenStore.set(_token);
     notifyListeners();
+    // Cached profile renders instantly; refresh role/created_at in the
+    // background. Failure keeps the cached values (offline start).
+    if (_token != null) refreshProfile();
+  }
+
+  /// Pull the authoritative profile from `/api/me`.
+  Future<void> refreshProfile() async {
+    if (_token == null) return;
+    try {
+      final data = await _client.getJson(ApiConfig.me());
+      final user = data is Map ? (data['data'] ?? data) : null;
+      if (user is Map) await _applyProfile(Map<String, dynamic>.from(user));
+    } catch (_) {
+      // Silent: the cached profile is still valid for display.
+    }
+  }
+
+  /// Merge updated profile fields (used by Edit profile).
+  Future<void> applyProfilePatch(Map<String, dynamic> patch) =>
+      _applyProfile(patch);
+
+  Future<void> _applyProfile(Map<String, dynamic> user) async {
+    for (final key in [
+      'first_name',
+      'last_name',
+      'email',
+      'contacts',
+      'role',
+      'created_at',
+    ]) {
+      if (user.containsKey(key) && user[key] != null) {
+        _profile[key] = user[key].toString();
+      }
+    }
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kProfileKey, json.encode(_profile));
+    notifyListeners();
   }
 
   Future<void> login({required String email, required String password}) async {
@@ -91,11 +134,15 @@ class AuthProvider extends ChangeNotifier {
           'last_name': user['last_name']?.toString() ?? '',
           'email': user['email']?.toString() ?? '',
           'contacts': user['contacts']?.toString() ?? '',
+          'role': user['role']?.toString() ?? 'customer',
+          'created_at': user['created_at']?.toString() ?? '',
         };
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString(_kProfileKey, json.encode(_profile));
         notifyListeners();
       }
+      // Ensure role/created_at are always present, even on older responses.
+      await refreshProfile();
     } finally {
       _setLoading(false);
     }
