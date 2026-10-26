@@ -1,8 +1,8 @@
 # Release checklist — Haven (Android)
 
-Status: **blocked on two decisions** (package id + upload keystore). Everything
-else is ready. Last build in this round: `flutter build appbundle --release`
-(debug-signed on purpose, see §3).
+Status: **blocked on two decisions** (package id + upload keystore) plus hardware
+QA. Code, backend and portal are ready. Last build in this round:
+`flutter build appbundle --release` (debug-signed on purpose, see §3).
 
 ---
 
@@ -82,7 +82,8 @@ splits per device, so the x86_64 slice only affects emulator installs.
 - Store listing: 512×512 icon (`assets/images/haven.png` is 1254×1254 —
   downscale), 1024×500 feature graphic (needs design), 2–8 phone screenshots.
 - Privacy policy URL (required — the app collects accounts, bookings, location,
-  photos). Needs a hosted page.
+  photos). Hosted at `https://haven-venue.vercel.app/privacy`; terms at
+  `https://haven-venue.vercel.app/terms`.
 - Data safety form: account data, approximate/precise location, photos,
   booking history; encrypted in transit = yes.
 - Content rating questionnaire + target audience.
@@ -116,8 +117,10 @@ Run on a real mid-range Android, not the emulator:
 - No "back to Haven app" link on the web success screen yet (needs App Links,
   which require the final package name from §1).
 - No approve/reject email — hosts see status on the portal dashboard.
-- Public venue JSON still exposes `reviewed_by`/`submitted_at` (harmless).
-- `DELETE /venues/:id` trusts the token role instead of re-reading the DB.
+- Support address is still `johnkiranga25@gmail.com`; replace it with a real
+  support mailbox before wide release (`ApiConfig.supportEmail` and the portal
+  footer/legal pages).
+- The 8-item device QA (§5) and the host flow (§6) still need a physical phone.
 
 ## 8. Release history
 
